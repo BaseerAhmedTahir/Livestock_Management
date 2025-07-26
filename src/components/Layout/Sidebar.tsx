@@ -80,6 +80,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, onOpen, activ
         ${isOpen ? 'translate-x-0 w-64' : '-translate-x-full w-0'}
         lg:translate-x-0
         ${isOpen ? 'lg:w-64' : 'lg:w-20'} // Adjust width for desktop collapsed state
+        hidden md:block // Add this line to hide on mobile and show on medium and larger screens
     `}>
       <div className="flex items-center justify-between p-4 border-b border-gray-200">
         {/* Toggle Button */}

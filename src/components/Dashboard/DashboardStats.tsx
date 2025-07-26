@@ -1,4 +1,7 @@
-// src/components/Dashboard/DashboardStats.tsx
+/* ────────────────────────────────────────────────────────────────
+   src/components/Dashboard/DashboardStats.tsx
+   (fixed mobile overlapping icons)
+   ──────────────────────────────────────────────────────────────── */
 import React, { memo, useMemo } from 'react';
 import {
   TrendingUp,
@@ -20,7 +23,7 @@ interface Stat {
   value: string;
   subtitle: string;
   icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
-  color: string;
+  color: string;            // Tailwind bg-color for icon circle
   trend: Trend;
 }
 
@@ -33,16 +36,16 @@ export const DashboardStats: React.FC = memo(() => {
   /* ----------------------------- Memoised maths ----------------------------- */
   const stats: Stat[] = useMemo(() => {
     /* ---------- Raw numbers ---------- */
-    const totalGoats = goats.length;
-    const activeGoats = goats.filter((g) => g.status === 'Active');
-    const soldGoats = goats.filter((g) => g.status === 'Sold');
+    const totalGoats   = goats.length;
+    const activeGoats  = goats.filter((g) => g.status === 'Active');
+    const soldGoats    = goats.filter((g) => g.status === 'Sold');
 
     const totalInvestment = goats.reduce((s, g) => s + g.purchasePrice, 0);
-    const totalRevenue = goats
+    const totalRevenue    = goats
       .filter((g) => g.salePrice)
       .reduce((s, g) => s + (g.salePrice ?? 0), 0);
 
-    const careExp = expenses.reduce((s, e) => s + e.amount, 0);
+    const careExp   = expenses.reduce((s, e) => s + e.amount, 0);
     const healthExp = healthRecords.reduce((s, h) => s + h.cost, 0);
     const totalExpenses = careExp + healthExp;
 
@@ -139,7 +142,7 @@ export const DashboardStats: React.FC = memo(() => {
 
   /* ------------------------------- RENDER ---------------------------------- */
   return (
-    <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
+    <section className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
       {stats.map(({ title, value, subtitle, icon: Icon, color, trend }) => {
         const TrendIcon =
           trend === 'up' ? TrendingUp : trend === 'down' ? TrendingDown : null;
@@ -148,39 +151,39 @@ export const DashboardStats: React.FC = memo(() => {
           <article
             key={title}
             tabIndex={0}
-            className="relative overflow-hidden rounded-xl border border-gray-200 bg-white p-5 shadow-sm transition hover:shadow-md focus-visible:outline-none focus-visible:ring focus-visible:ring-blue-500/40 dark:border-gray-700 dark:bg-gray-800"
+            className="flex flex-col justify-between overflow-hidden rounded-xl border border-gray-200 bg-white p-5 shadow-sm transition hover:shadow-md focus-visible:outline-none focus-visible:ring focus-visible:ring-blue-500/40 dark:border-gray-700 dark:bg-gray-800"
           >
-            {/* Left – numbers */}
-            <div>
+            {/* Top row: title + icon */}
+            <header className="mb-3 flex items-start justify-between">
               <h4 className="text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
                 {title}
               </h4>
-              <p className="mt-1 text-xl font-bold text-gray-900 dark:text-gray-50">
-                {value}
-              </p>
-              <div className="mt-1 flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
-                {subtitle}
-                {TrendIcon && (
-                  <TrendIcon
-                    aria-label={trend === 'up' ? 'Positive trend' : 'Negative trend'}
-                    className={`h-4 w-4 ${
-                      trend === 'up' ? 'text-emerald-500' : 'text-red-500'
-                    }`}
-                  />
-                )}
-              </div>
-            </div>
+              <span
+                className={`inline-flex h-10 w-10 items-center justify-center rounded-full ${color}`}
+              >
+                <Icon className="h-5 w-5 text-white" aria-hidden="true" />
+              </span>
+            </header>
 
-            {/* Right – coloured circle icon */}
-            <span
-              className={`absolute right-5 top-5 inline-flex h-10 w-10 items-center justify-center rounded-full ${color}`}
-            >
-              <Icon className="h-5 w-5 text-white" aria-hidden="true" />
-            </span>
+            {/* Main metric */}
+            <p className="text-xl font-bold text-gray-900 dark:text-gray-50">{value}</p>
+
+            {/* Sub-text + trend arrow */}
+            <div className="mt-1 flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
+              {subtitle}
+              {TrendIcon && (
+                <TrendIcon
+                  aria-label={trend === 'up' ? 'Positive trend' : 'Negative trend'}
+                  className={`h-4 w-4 ${
+                    trend === 'up' ? 'text-emerald-500' : 'text-red-500'
+                  }`}
+                />
+              )}
+            </div>
           </article>
         );
       })}
-    </div>
+    </section>
   );
 });
 

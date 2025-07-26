@@ -1,4 +1,7 @@
-// src/components/Layout/Header.tsx
+/* ────────────────────────────────────────────────────────────────
+   src/components/Layout/Header.tsx
+   (fixed pop-over width so it never flows outside mobile screen)
+   ──────────────────────────────────────────────────────────────── */
 import React, { memo, useMemo, useState } from 'react';
 import { Bell, User, BarChart3, LogOut } from 'lucide-react';
 import { format } from 'date-fns';
@@ -9,7 +12,6 @@ import { BusinessSelector } from '../Business/BusinessSelector';
 
 interface HeaderProps {
   title: string;
-  /* Only “All Businesses” button for owners */
   onViewAllBusinesses?: () => void;
 }
 
@@ -77,7 +79,6 @@ export const Header: React.FC<HeaderProps> = memo(
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4">
           {/* Left  */}
           <div className="flex items-center gap-3">
-            {/* —— Logo / title —— */}
             <span className="flex items-center gap-3">
               <span className="rounded-lg bg-emerald-100 p-2 dark:bg-emerald-900/20">
                 <BarChart3 className="h-6 w-6 text-emerald-600 dark:text-emerald-400" />
@@ -113,13 +114,25 @@ export const Header: React.FC<HeaderProps> = memo(
                 )}
               </button>
 
+              {/* ---------- Panel ---------- */}
               {showNotif && (
-                <div className="absolute right-0 mt-2 w-80 overflow-hidden rounded-lg border border-gray-200 bg-white shadow-lg z-30 dark:border-gray-700 dark:bg-gray-800">
+                <div
+                  className="
+                    absolute right-0 origin-top-right
+                    mt-2
+                    w-[calc(100vw-1.5rem)] max-w-xs
+                    sm:w-80 sm:max-w-none
+                    overflow-hidden rounded-lg border border-gray-200
+                    bg-white shadow-lg z-30
+                    dark:border-gray-700 dark:bg-gray-800
+                  "
+                >
                   <div className="border-b border-gray-200 px-4 py-3 dark:border-gray-700">
                     <h3 className="font-semibold text-gray-900 dark:text-gray-50">
                       Notifications
                     </h3>
                   </div>
+
                   <div className="max-h-64 divide-y divide-gray-100 overflow-y-auto dark:divide-gray-700">
                     {notifications.length ? (
                       notifications.map((n) => (
@@ -147,6 +160,7 @@ export const Header: React.FC<HeaderProps> = memo(
                       </p>
                     )}
                   </div>
+
                   {notifications.length > 0 && (
                     <p className="border-t border-gray-200 px-4 py-2 text-center text-xs text-gray-500 dark:border-gray-700 dark:text-gray-400">
                       Based on upcoming health-record due dates
@@ -179,8 +193,19 @@ export const Header: React.FC<HeaderProps> = memo(
                 </span>
               </button>
 
+              {/* ---------- Panel ---------- */}
               {showProfile && (
-                <div className="absolute right-0 mt-2 w-64 overflow-hidden rounded-lg border border-gray-200 bg-white shadow-lg z-30 dark:border-gray-700 dark:bg-gray-800">
+                <div
+                  className="
+                    absolute right-0 origin-top-right
+                    mt-2
+                    w-[calc(100vw-1.5rem)] max-w-xs
+                    sm:w-64 sm:max-w-none
+                    overflow-hidden rounded-lg border border-gray-200
+                    bg-white shadow-lg z-30
+                    dark:border-gray-700 dark:bg-gray-800
+                  "
+                >
                   <div className="flex items-center gap-3 border-b border-gray-200 px-4 py-3 dark:border-gray-700">
                     <span className="rounded-full bg-gray-100 p-2 dark:bg-gray-700/40">
                       <User className="h-6 w-6 text-gray-600 dark:text-gray-300" />
@@ -194,6 +219,7 @@ export const Header: React.FC<HeaderProps> = memo(
                       </p>
                     </div>
                   </div>
+
                   <button
                     type="button"
                     onClick={handleSignOut}

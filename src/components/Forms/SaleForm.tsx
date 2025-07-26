@@ -32,7 +32,7 @@ export const SaleForm: React.FC<SaleFormProps> = ({ isOpen, onClose, goat }) => 
 
   const caretaker = goat.caretakerId ? caretakers.find(c => c.id === goat.caretakerId) : null;
   
-  const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm<SaleFormData>({
+  const { register, handleSubmit, watch, setValue, formState: { errors }, reset } = useForm<SaleFormData>({
     defaultValues: {
       salePrice: 0,
       saleDate: new Date().toISOString().split('T')[0],
@@ -49,44 +49,28 @@ export const SaleForm: React.FC<SaleFormProps> = ({ isOpen, onClose, goat }) => 
       const basePrice = goat.purchasePrice;
       const daysSincePurchase = Math.floor((new Date().getTime() - goat.purchaseDate.getTime()) / (1000 * 60 * 60 * 24));
       const monthsOnFarm = Math.max(1, Math.floor(daysSincePurchase / 30));
-      
-      // Care duration adjustment (5% per month, max 50%)
       const careDurationAdjustment = Math.min(0.5, monthsOnFarm * 0.05);
-      
-      // Weight adjustment (based on current weight vs average for breed)
-      const averageWeight = 35; // Average goat weight
+      const averageWeight = 35;
       const weightFactor = goat.currentWeight > averageWeight ? 0.1 : goat.currentWeight < (averageWeight * 0.8) ? -0.1 : 0;
-      
-      // Health factor (assume healthy if no recent health issues)
-      const healthFactor = 0.05; // 5% bonus for healthy goats
-      
-      // Investment recovery (total expenses + 20% margin)
+      const healthFactor = 0.05;
       const goatExpenses = expenses.filter(e => e.goatId === goat.id);
       const totalExpenses = goatExpenses.reduce((sum, expense) => sum + expense.amount, 0);
-      const investmentRecovery = totalExpenses * 1.2; // 20% margin on expenses
-      
+      const investmentRecovery = totalExpenses * 1.2;
       const suggested = basePrice * (1 + careDurationAdjustment + weightFactor + healthFactor) + investmentRecovery;
       setSuggestedPrice(Math.round(suggested));
     };
-
     calculateSuggestedPrice();
   }, [goat, expenses]);
 
   // Calculate profit/loss when sale price changes
   useEffect(() => {
     if (watchedSalePrice > 0) {
-      // Calculate specific expenses for this goat
       const specificExpenses = expenses.filter(e => e.goatId === goat.id).reduce((sum, e) => sum + e.amount, 0);
-      
-      // Calculate shared expenses (expenses without specific goat assignment)
       const generalExpenses = expenses.filter(e => !e.goatId).reduce((sum, e) => sum + e.amount, 0);
       const activeGoats = goats.filter(g => g.status === 'Active');
       const totalActiveGoats = activeGoats.length;
       const sharedExpensePerGoat = totalActiveGoats > 0 ? generalExpenses / totalActiveGoats : 0;
-      
-      // Calculate health expenses for this goat
       const healthExpenses = healthRecords.filter(h => h.goatId === goat.id).reduce((sum, h) => sum + h.cost, 0);
-      
       const totalExpenses = specificExpenses + sharedExpensePerGoat + healthExpenses;
       const netProfit = watchedSalePrice - goat.purchasePrice - totalExpenses;
       const profitMargin = watchedSalePrice > 0 ? (netProfit / watchedSalePrice) * 100 : 0;
@@ -114,7 +98,8 @@ export const SaleForm: React.FC<SaleFormProps> = ({ isOpen, onClose, goat }) => 
     setError(null);
 
     try {
-      await sellGoat(goat.id, Number(data.salePrice), new Date(data.saleDate), data.buyer);
+      await sellGoat(goat.id, Number(data.salePrice), new Date(data.saleDate), data.buyer, data.notes);
+      reset();
       onClose();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
@@ -130,16 +115,20 @@ export const SaleForm: React.FC<SaleFormProps> = ({ isOpen, onClose, goat }) => 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto shadow-2xl">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2 md:p-4">
+      <div
+        className="bg-white rounded-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto shadow-2xl pb-24 md:pb-8"
+        style={{ scrollPaddingBottom: '6rem' }}
+      >
         <div className="flex items-center justify-between p-6 border-b border-gray-200 bg-gradient-to-r from-emerald-50 to-blue-50">
           <div>
             <h2 className="text-2xl font-bold text-gray-900">Sell Goat</h2>
             <p className="text-gray-600">{goat.tagNumber} - {goat.nickname || 'Unnamed'}</p>
           </div>
           <button
-            onClick={onClose}
+            onClick={() => { reset(); onClose(); }}
             className="p-2 hover:bg-white hover:bg-opacity-50 rounded-full transition-colors"
+            aria-label="Close"
           >
             <X className="h-6 w-6 text-gray-500" />
           </button>
@@ -236,7 +225,7 @@ export const SaleForm: React.FC<SaleFormProps> = ({ isOpen, onClose, goat }) => 
                 <div className="flex justify-end space-x-3 pt-6">
                   <button
                     type="button"
-                    onClick={onClose}
+                    onClick={() => { reset(); onClose(); }}
                     disabled={loading}
                     className="px-6 py-3 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors font-medium"
                   >

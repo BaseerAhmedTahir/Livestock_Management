@@ -1,123 +1,174 @@
-import React, { useState } from 'react';
-import { X, Building2 } from 'lucide-react';
+// src/components/Business/BusinessCreationModal.tsx
+import React, { memo, useCallback, useState } from 'react';
+import { X, Building2, AlertCircle } from 'lucide-react';
 import { useBusiness } from '../../context/BusinessContext';
+import { Button } from '../common/Button';
 
-interface BusinessCreationModalProps {
+interface Props {
   isOpen: boolean;
   onClose: () => void;
 }
 
-export const BusinessCreationModal: React.FC<BusinessCreationModalProps> = ({ isOpen, onClose }) => {
-  const { createBusiness } = useBusiness();
-  const [name, setName] = useState('');
-  const [description, setDescription] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+export const BusinessCreationModal: React.FC<Props> = memo(
+  ({ isOpen, onClose }) => {
+    /* ------------------------------------------------------------------ */
+    /*                              CONTEXT                               */
+    /* ------------------------------------------------------------------ */
+    const { createBusiness } = useBusiness();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!name.trim()) return;
+    /* ------------------------------------------------------------------ */
+    /*                              STATE                                 */
+    /* ------------------------------------------------------------------ */
+    const [name, setName] = useState('');
+    const [desc, setDesc] = useState('');
+    const [error, setError] = useState<string | null>(null);
+    const [loading, setLoading] = useState(false);
 
-    setLoading(true);
-    setError(null);
-
-    try {
-      await createBusiness(name.trim(), description.trim() || undefined);
+    /* ------------------------------------------------------------------ */
+    /*                              HANDLERS                              */
+    /* ------------------------------------------------------------------ */
+    const resetAndClose = useCallback(() => {
+      if (loading) return;
       setName('');
-      setDescription('');
-      onClose();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create business');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleClose = () => {
-    if (!loading) {
-      setName('');
-      setDescription('');
+      setDesc('');
       setError(null);
       onClose();
-    }
-  };
+    }, [loading, onClose]);
 
-  if (!isOpen) return null;
+    const handleSubmit = async (e: React.FormEvent) => {
+      e.preventDefault();
+      if (!name.trim()) return;
+      setLoading(true);
+      setError(null);
 
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg w-full max-w-md">
-        <div className="flex items-center justify-between p-6 border-b border-gray-200">
-          <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-emerald-100 rounded-full flex items-center justify-center">
-              <Building2 className="h-5 w-5 text-emerald-600" />
+      try {
+        await createBusiness(name.trim(), desc.trim() || undefined);
+        resetAndClose();
+      } catch (err: any) {
+        setError(err?.message ?? 'Failed to create business');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    /* ------------------------------------------------------------------ */
+    /*                              VIEW                                  */
+    /* ------------------------------------------------------------------ */
+    if (!isOpen) return null;
+
+    return (
+      <div
+        role="dialog"
+        aria-modal="true"
+        className="fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-sm"
+      >
+        {/* overlay */}
+        <div
+          className="absolute inset-0 bg-black/50"
+          onClick={resetAndClose}
+          aria-hidden="true"
+        />
+
+        {/* modal card */}
+        <div className="relative w-full max-w-md overflow-hidden rounded-xl border border-gray-200 bg-white shadow-2xl dark:border-gray-700 dark:bg-gray-800">
+          {/* header */}
+          <div className="flex items-center justify-between border-b border-gray-100 px-6 py-5 dark:border-gray-700">
+            <div className="flex items-center gap-3">
+              <span className="rounded-xl bg-emerald-100 p-3 dark:bg-emerald-900/30">
+                <Building2 className="h-6 w-6 text-emerald-600 dark:text-emerald-400" />
+              </span>
+              <div>
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-50">
+                  Create New Business
+                </h2>
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  Set up your livestock management
+                </p>
+              </div>
             </div>
-            <h2 className="text-xl font-semibold text-gray-900">Create New Business</h2>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={resetAndClose}
+              disabled={loading}
+              className="rounded-full"
+              icon={<X className="h-5 w-5" />}
+            />
           </div>
-          <button
-            onClick={handleClose}
-            disabled={loading}
-            className="p-2 hover:bg-gray-100 rounded-full transition-colors disabled:opacity-50"
-          >
-            <X className="h-5 w-5 text-gray-500" />
-          </button>
+
+          {/* error alert */}
+          {error && (
+            <div className="mx-6 mt-4 flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-700 dark:bg-red-900/20">
+              <AlertCircle className="h-5 w-5 text-red-600 dark:text-red-400" />
+              <div className="text-sm">
+                <p className="font-medium text-red-800 dark:text-red-300">
+                  {error}
+                </p>
+                <p className="mt-1 text-red-700 dark:text-red-400">
+                  Please try again or contact support.
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* form */}
+          <form onSubmit={handleSubmit} className="space-y-6 px-6 py-6">
+            <div className="space-y-4">
+              <div>
+                <label className="mb-1.5 block text-sm font-medium text-gray-900 dark:text-gray-50">
+                  Business Name *
+                </label>
+                <input
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="e.g. Johar Cattle Farm"
+                  required
+                  disabled={loading}
+                  className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 shadow-sm transition focus:border-emerald-500 focus:ring-emerald-500 dark:border-gray-600 dark:bg-gray-900/20"
+                />
+              </div>
+
+              <div>
+                <label className="mb-1.5 block text-sm font-medium text-gray-900 dark:text-gray-50">
+                  Description <span className="text-gray-500">(optional)</span>
+                </label>
+                <textarea
+                  rows={3}
+                  value={desc}
+                  onChange={(e) => setDesc(e.target.value)}
+                  placeholder="Brief description…"
+                  disabled={loading}
+                  className="w-full resize-none rounded-lg border border-gray-300 bg-white px-4 py-2.5 shadow-sm transition focus:border-emerald-500 focus:ring-emerald-500 dark:border-gray-600 dark:bg-gray-900/20"
+                />
+              </div>
+            </div>
+
+            {/* footer buttons */}
+            <div className="flex items-center justify-end gap-3 border-t border-gray-100 pt-6 dark:border-gray-700">
+              <Button
+                variant="secondary"
+                size="md"
+                onClick={resetAndClose}
+                disabled={loading}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="primary"
+                size="md"
+                type="submit"
+                disabled={loading || !name.trim()}
+                isLoading={loading}
+              >
+                {loading ? 'Creating…' : 'Create Business'}
+              </Button>
+            </div>
+          </form>
         </div>
-
-        {error && (
-          <div className="mx-6 mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-            <p className="text-red-700 text-sm">{error}</p>
-          </div>
-        )}
-
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Business Name *
-            </label>
-            <input
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-              placeholder="e.g., Johar Cattle Farm"
-              required
-              disabled={loading}
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Description (Optional)
-            </label>
-            <textarea
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              rows={3}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-              placeholder="Brief description of your business..."
-              disabled={loading}
-            />
-          </div>
-
-          <div className="flex justify-end space-x-3 pt-4">
-            <button
-              type="button"
-              onClick={handleClose}
-              disabled={loading}
-              className="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={loading || !name.trim()}
-              className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {loading ? 'Creating...' : 'Create Business'}
-            </button>
-          </div>
-        </form>
       </div>
-    </div>
-  );
-};
+    );
+  },
+);
+
+BusinessCreationModal.displayName = 'BusinessCreationModal';

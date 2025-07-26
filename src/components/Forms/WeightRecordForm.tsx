@@ -19,29 +19,37 @@ interface WeightRecordFormData {
   notes: string;
 }
 
-export const WeightRecordForm: React.FC<WeightRecordFormProps> = ({ 
-  isOpen, 
-  onClose, 
+export const WeightRecordForm: React.FC<WeightRecordFormProps> = ({
+  isOpen,
+  onClose,
   goatId,
   weightRecord,
-  isEdit = false 
+  isEdit = false,
 }) => {
-  const { goats, addWeightRecord } = useApp();
+  const { goats, addWeightRecord, updateWeightRecord } = useApp();
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
-  
-  const { register, handleSubmit, reset, formState: { errors } } = useForm<WeightRecordFormData>({
-    defaultValues: weightRecord ? {
-      goatId: weightRecord.goatId,
-      weight: weightRecord.weight,
-      date: weightRecord.date.toISOString().split('T')[0],
-      notes: weightRecord.notes || ''
-    } : {
-      goatId: goatId || '',
-      weight: 0,
-      date: new Date().toISOString().split('T')[0],
-      notes: ''
-    }
+
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm<WeightRecordFormData>({
+    defaultValues: weightRecord
+      ? {
+          goatId: weightRecord.goatId,
+          weight: weightRecord.weight,
+          date: weightRecord.date.toISOString().split('T')[0],
+          notes: weightRecord.notes || '',
+        }
+      : {
+          goatId: goatId || '',
+          weight: 0,
+          date: new Date().toISOString().split('T')[0],
+          notes: '',
+        },
+    mode: 'onTouched',
   });
 
   const onSubmit = async (data: WeightRecordFormData) => {
@@ -53,10 +61,14 @@ export const WeightRecordForm: React.FC<WeightRecordFormProps> = ({
         goatId: data.goatId,
         weight: Number(data.weight),
         date: new Date(data.date),
-        notes: data.notes || undefined
+        notes: data.notes || undefined,
       };
 
-      await addWeightRecord(recordData);
+      if (isEdit && weightRecord) {
+        await updateWeightRecord(weightRecord.id, recordData);
+      } else {
+        await addWeightRecord(recordData);
+      }
       reset();
       onClose();
     } catch (err) {
@@ -69,30 +81,31 @@ export const WeightRecordForm: React.FC<WeightRecordFormProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg w-full max-w-md">
-        <div className="flex items-center justify-between p-6 border-b border-gray-200">
-          <h2 className="text-xl font-semibold text-gray-900">
-            Add Weight Record
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2 md:p-4">
+      <div className="bg-white rounded-lg w-full max-w-md max-h-[95vh] overflow-y-auto shadow-lg">
+        <div className="flex items-center justify-between p-4 border-b border-gray-200">
+          <h2 className="text-lg md:text-xl font-semibold text-gray-900">
+            {isEdit ? 'Edit Weight Record' : 'Add Weight Record'}
           </h2>
           <button
-            onClick={onClose}
+            onClick={() => { reset(); onClose(); }}
             className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+            aria-label="Close"
           >
             <X className="h-5 w-5 text-gray-500" />
           </button>
         </div>
-        
+
         {error && (
-          <div className="mx-6 mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+          <div className="mx-4 mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
             <p className="text-red-700 text-sm">{error}</p>
           </div>
         )}
 
-        <form onSubmit={handleSubmit(onSubmit)} className="p-6 space-y-4">
+        <form onSubmit={handleSubmit(onSubmit)} className="p-4 md:p-6 space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Goat *
+              Goat <span className="text-red-500">*</span>
             </label>
             <select
               {...register('goatId', { required: 'Please select a goat' })}
@@ -106,18 +119,18 @@ export const WeightRecordForm: React.FC<WeightRecordFormProps> = ({
               ))}
             </select>
             {errors.goatId && (
-              <p className="text-red-500 text-sm mt-1">{errors.goatId.message}</p>
+              <p className="text-red-500 text-xs mt-1">{errors.goatId.message}</p>
             )}
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Weight (kg) *
+              Weight (kg) <span className="text-red-500">*</span>
             </label>
             <input
-              {...register('weight', { 
+              {...register('weight', {
                 required: 'Weight is required',
-                min: { value: 1, message: 'Weight must be greater than 0' }
+                min: { value: 1, message: 'Weight must be greater than 0' },
               })}
               type="number"
               step="0.1"
@@ -125,13 +138,13 @@ export const WeightRecordForm: React.FC<WeightRecordFormProps> = ({
               placeholder="25.5"
             />
             {errors.weight && (
-              <p className="text-red-500 text-sm mt-1">{errors.weight.message}</p>
+              <p className="text-red-500 text-xs mt-1">{errors.weight.message}</p>
             )}
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Date *
+              Date <span className="text-red-500">*</span>
             </label>
             <input
               {...register('date', { required: 'Date is required' })}
@@ -139,7 +152,7 @@ export const WeightRecordForm: React.FC<WeightRecordFormProps> = ({
               className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
             />
             {errors.date && (
-              <p className="text-red-500 text-sm mt-1">{errors.date.message}</p>
+              <p className="text-red-500 text-xs mt-1">{errors.date.message}</p>
             )}
           </div>
 
@@ -158,7 +171,7 @@ export const WeightRecordForm: React.FC<WeightRecordFormProps> = ({
           <div className="flex justify-end space-x-3 pt-4">
             <button
               type="button"
-              onClick={onClose}
+              onClick={() => { reset(); onClose(); }}
               disabled={loading}
               className="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
             >
@@ -169,7 +182,7 @@ export const WeightRecordForm: React.FC<WeightRecordFormProps> = ({
               disabled={loading}
               className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors"
             >
-              {loading ? 'Saving...' : 'Add Weight Record'}
+              {loading ? 'Saving...' : isEdit ? 'Update Weight Record' : 'Add Weight Record'}
             </button>
           </div>
         </form>

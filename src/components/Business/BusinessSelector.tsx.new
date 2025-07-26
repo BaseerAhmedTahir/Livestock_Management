@@ -1,0 +1,176 @@
+import React, { useState } from 'react';
+import { ChevronDown, Plus, Building2, BarChart3, Trash2 } from 'lucide-react';
+import { useBusiness } from '../../context/BusinessContext';
+import { BusinessCreationModal } from './BusinessCreationModal';
+import { Button } from '../common/Button';
+import { Badge } from '../common/Badge';
+
+interface BusinessSelectorProps {
+  onViewAllBusinesses?: () => void;
+}
+
+export const BusinessSelector: React.FC<BusinessSelectorProps> = ({ onViewAllBusinesses }) => {
+  const { businesses, activeBusiness, setActiveBusiness, userRole, deleteBusiness } = useBusiness();
+  const [isOpen, setIsOpen] = useState(false);
+  const [isCreationModalOpen, setIsCreationModalOpen] = useState(false);
+  const [deletingBusinessId, setDeletingBusinessId] = useState<string | null>(null);
+
+  // Don't show selector if user is only a caretaker with one business
+  if (userRole === 'caretaker' && businesses.length <= 1) {
+    return activeBusiness ? (
+      <div className="flex items-center justify-center py-2">
+        <div className="flex items-center space-x-2 px-4 py-2 bg-white rounded-lg shadow-sm border border-gray-200">
+          <Building2 className="h-5 w-5 text-emerald-500" />
+          <span className="text-sm font-medium text-gray-900">
+            {activeBusiness.name}
+          </span>
+          <Badge variant="info" size="sm">Caretaker</Badge>
+        </div>
+      </div>
+    ) : null;
+  }
+
+  if (!activeBusiness) return null;
+
+  const handleDeleteBusiness = async (businessId: string, businessName: string) => {
+    console.log('Starting business deletion process for:', businessName, businessId);
+    
+    const confirmed = window.confirm(
+      `Are you sure you want to delete "${businessName}"?\n\n` +
+      `This will permanently delete:\n` +
+      `• All goats and their records\n` +
+      `• All caretakers and their data\n` +
+      `• All financial records and transactions\n` +
+      `• All health and weight records\n\n` +
+      `This action cannot be undone!`
+    );
+
+    if (!confirmed) return;
+
+    const userInput = prompt(
+      `Please type "DELETE" (in capital letters) to confirm deletion of "${businessName}":`
+    );
+
+    if (userInput !== 'DELETE') {
+      alert('Deletion cancelled. You must type "DELETE" exactly to confirm.');
+      return;
+    }
+
+    try {
+      setDeletingBusinessId(businessId);
+      await deleteBusiness(businessId);
+      setIsOpen(false);
+      alert(`Business "${businessName}" has been successfully deleted.`);
+    } catch (error) {
+      console.error('Error deleting business:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      alert(`Failed to delete business: ${errorMessage}`);
+    } finally {
+      setDeletingBusinessId(null);
+    }
+  };
+
+  return (
+    <>
+      <div className="relative w-full max-w-3xl mx-auto">
+        <div className="flex items-center space-x-2">
+          <Button
+            variant="secondary"
+            size="sm"
+            className="flex-1 justify-between text-left"
+            onClick={() => setIsOpen(!isOpen)}
+          >
+            <div className="flex items-center space-x-2">
+              <Building2 className="h-5 w-5 text-emerald-500" />
+              <span className="font-medium text-gray-900">{activeBusiness.name}</span>
+              {userRole === 'owner' && (
+                <Badge variant="success" size="sm">Owner</Badge>
+              )}
+            </div>
+            <ChevronDown 
+              className={`h-5 w-5 text-gray-500 transition-transform duration-200 ${
+                isOpen ? 'transform rotate-180' : ''
+              }`}
+            />
+          </Button>
+
+          {userRole === 'owner' && (
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={() => setIsCreationModalOpen(true)}
+              icon={<Plus className="h-5 w-5" />}
+            >
+              Add Business
+            </Button>
+          )}
+        </div>
+
+        {/* Dropdown menu */}
+        {isOpen && (
+          <div className="absolute mt-2 w-full bg-white rounded-xl shadow-lg border border-gray-100 z-50 overflow-hidden animate-scale-up">
+            <div className="p-2">
+              {businesses.map((business) => (
+                <button
+                  key={business.id}
+                  onClick={() => {
+                    setActiveBusiness(business);
+                    setIsOpen(false);
+                  }}
+                  disabled={business.id === deletingBusinessId}
+                  className={`w-full flex items-center justify-between px-4 py-2 rounded-lg text-left
+                    ${business.id === activeBusiness.id
+                      ? 'bg-emerald-50 text-emerald-900'
+                      : 'text-gray-700 hover:bg-gray-50'
+                    } transition-colors duration-150`}
+                >
+                  <div className="flex items-center space-x-3">
+                    <BarChart3 className={`h-5 w-5 ${
+                      business.id === activeBusiness.id ? 'text-emerald-500' : 'text-gray-400'
+                    }`} />
+                    <span className="font-medium">{business.name}</span>
+                  </div>
+                  
+                  {userRole === 'owner' && business.id !== activeBusiness.id && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeleteBusiness(business.id, business.name);
+                      }}
+                      className="opacity-0 group-hover:opacity-100 text-red-600 hover:text-red-700"
+                      icon={<Trash2 className="h-4 w-4" />}
+                      isLoading={deletingBusinessId === business.id}
+                    />
+                  )}
+                </button>
+              ))}
+            </div>
+            
+            {userRole === 'owner' && onViewAllBusinesses && (
+              <div className="border-t border-gray-100 p-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="w-full justify-center text-emerald-600 hover:text-emerald-700"
+                  onClick={() => {
+                    onViewAllBusinesses();
+                    setIsOpen(false);
+                  }}
+                >
+                  View All Businesses
+                </Button>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      <BusinessCreationModal
+        isOpen={isCreationModalOpen}
+        onClose={() => setIsCreationModalOpen(false)}
+      />
+    </>
+  );
+};

@@ -10,11 +10,9 @@ import {
   X,
   Menu,
   PawPrint
-} from 'lucide-react'; // Corrected line
+} from 'lucide-react';
 import { useBusiness } from '../../context/BusinessContext';
-import livestockProLogo from '../../assets/livestockpro-logo.png'; // Assuming a path to your logo
 
-// ... rest of your component code
 interface SidebarProps {
   isOpen: boolean;
   onClose: () => void;
@@ -23,7 +21,13 @@ interface SidebarProps {
   onTabChange: (tab: string) => void;
 }
 
-export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, onOpen, activeTab, onTabChange }) => {
+export const Sidebar: React.FC<SidebarProps> = ({
+  isOpen,
+  onClose,
+  onOpen,
+  activeTab,
+  onTabChange
+}) => {
   const { userRole, caretakerPermissions } = useBusiness();
 
   const getNavigation = () => {
@@ -42,10 +46,9 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, onOpen, activ
         { id: 'reports', name: 'Reports', icon: FileText }
       );
     } else if (userRole === 'caretaker' && caretakerPermissions) {
-      const filteredNavigation = baseNavigation.filter(item => {
-        // Only include items if the permission is explicitly true
-        return caretakerPermissions[item.id as keyof typeof caretakerPermissions] === true;
-      });
+      const filteredNavigation = baseNavigation.filter(item =>
+        caretakerPermissions[item.id as keyof typeof caretakerPermissions] === true
+      );
 
       const ownerFeatures = [];
       if (caretakerPermissions.caretakers) {
@@ -58,32 +61,34 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, onOpen, activ
         ownerFeatures.push({ id: 'reports', name: 'Reports', icon: FileText });
       }
 
-      if (ownerFeatures.length > 0) {
-        const scannerIndex = filteredNavigation.findIndex(item => item.id === 'scanner');
-        if (scannerIndex !== -1) {
-          filteredNavigation.splice(scannerIndex, 0, ...ownerFeatures);
-        } else {
-          filteredNavigation.push(...ownerFeatures);
-        }
+      const scannerIndex = filteredNavigation.findIndex(item => item.id === 'scanner');
+      if (scannerIndex !== -1) {
+        filteredNavigation.splice(scannerIndex, 0, ...ownerFeatures);
+      } else {
+        filteredNavigation.push(...ownerFeatures);
       }
+
       return filteredNavigation;
     }
+
     return baseNavigation;
   };
 
   const navigation = getNavigation();
 
   return (
-    <div className={`
+    <div
+      className={`
         fixed inset-y-0 left-0 z-50 bg-white shadow-lg
         transform transition-all duration-300 ease-in-out
         ${isOpen ? 'translate-x-0 w-64' : '-translate-x-full w-0'}
         lg:translate-x-0
-        ${isOpen ? 'lg:w-64' : 'lg:w-20'} // Adjust width for desktop collapsed state
-        hidden md:block // Add this line to hide on mobile and show on medium and larger screens
-    `}>
+        ${isOpen ? 'lg:w-64' : 'lg:w-20'}
+        hidden lg:block
+      `}
+    >
+      {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-gray-200">
-        {/* Toggle Button */}
         <button
           onClick={isOpen ? onClose : onOpen}
           className="p-2 rounded-md hover:bg-gray-100 transition-colors"
@@ -91,16 +96,14 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, onOpen, activ
           {isOpen ? <X className="h-5 w-5 text-gray-600" /> : <Menu className="h-5 w-5 text-gray-600" />}
         </button>
 
-        {/* Logo and Name */}
         {isOpen && (
           <div className="flex items-center flex-1 ml-2">
-            {/* Replace with your actual logo component or image if you have one */}
-            {/* <img src="/path/to/livestockpro-logo.png" alt="LivestockPro" className="h-6 w-auto mr-2" /> */}
             <h2 className="text-lg font-semibold text-gray-900 whitespace-nowrap">LivestockPro</h2>
           </div>
         )}
       </div>
 
+      {/* Navigation */}
       <nav className="mt-4 px-2">
         <ul className="space-y-1">
           {navigation.map((item) => {
@@ -110,28 +113,22 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, onOpen, activ
                 <button
                   onClick={() => {
                     onTabChange(item.id);
-                    if (window.innerWidth < 1024) { // Assuming lg: is 1024px
-                       onClose();
+                    if (window.innerWidth < 1024) {
+                      onClose();
                     }
                   }}
-                  className={`w-full flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors
+                  className={`
+                    w-full flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors
                     ${activeTab === item.id
                       ? 'bg-emerald-100 text-emerald-900'
-                      : 'text-gray-700 hover:bg-gray-100'
-                    }
-                    ${!isOpen ? 'justify-center' : ''} // Center icon when collapsed
+                      : 'text-gray-700 hover:bg-gray-100'}
+                    ${!isOpen ? 'justify-center' : ''}
                   `}
                 >
-                  <Icon className={`${isOpen ? 'mr-3' : ''} h-5 w-5`} /> {/* Remove margin if collapsed */}
-                  {/* Conditionally show text based on isOpen */}
-                  <span className={`${!isOpen ? 'hidden' : 'inline'}`}>
-                    {item.name}
-                  </span>
-                  {/* For collapsed state, if you want a tooltip, add here */}
+                  <Icon className={`${isOpen ? 'mr-3' : ''} h-5 w-5`} />
+                  <span className={`${!isOpen ? 'hidden' : 'inline'}`}>{item.name}</span>
                   {!isOpen && (
-                    <span className="sr-only">
-                        {item.name}
-                    </span>
+                    <span className="sr-only">{item.name}</span>
                   )}
                 </button>
               </li>

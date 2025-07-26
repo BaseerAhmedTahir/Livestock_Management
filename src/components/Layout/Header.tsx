@@ -1,5 +1,5 @@
 import React from 'react';
-import { Menu, Bell, User, BarChart3, Settings, LogOut } from 'lucide-react';
+import { Menu, Bell, User, BarChart3, LogOut } from 'lucide-react';
 import { format } from 'date-fns';
 import { useAuth } from '../../hooks/useAuth';
 import { useApp } from '../../context/AppContext';
@@ -45,17 +45,10 @@ export const Header: React.FC<HeaderProps> = ({ onMenuToggle, title, onViewAllBu
   };
 
   return (
-    <header className="bg-white shadow-md border-b border-gray-200">
-      {/* Business Selector - This section will now always be at the top and full width */}
-      <div className="w-full px-4 py-2 border-b border-gray-200">
-        <div className="max-w-7xl mx-auto"> {/* Added max-w-7xl and mx-auto for content alignment */}
-          <BusinessSelector onViewAllBusinesses={onViewAllBusinesses} />
-        </div>
-      </div>
-
-      {/* Main header content */}
-      <div className="max-w-7xl mx-auto">
-        <div className="flex items-center justify-between h-16 px-4">
+    <header className="bg-white shadow-sm border-b border-gray-200"> {/* Softer shadow */}
+      {/* Main header content row */}
+      <div className="max-w-7xl mx-auto px-4"> {/* Apply padding here */}
+        <div className="flex items-center justify-between h-16">
           {/* Left section */}
           <div className="flex items-center space-x-4">
             <button
@@ -74,12 +67,12 @@ export const Header: React.FC<HeaderProps> = ({ onMenuToggle, title, onViewAllBu
               </div>
             </div>
           </div>
-          
+
           {/* Right section */}
           <div className="flex items-center space-x-3">
             {/* Notifications */}
             <div className="relative">
-              <button 
+              <button
                 onClick={() => setShowNotifications(!showNotifications)}
                 className="p-2 rounded-full hover:bg-gray-100 transition-colors relative"
               >
@@ -90,7 +83,7 @@ export const Header: React.FC<HeaderProps> = ({ onMenuToggle, title, onViewAllBu
                   </span>
                 )}
               </button>
-              
+
               {showNotifications && (
                 <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
                   <div className="p-4 border-b border-gray-200">
@@ -119,10 +112,10 @@ export const Header: React.FC<HeaderProps> = ({ onMenuToggle, title, onViewAllBu
                 </div>
               )}
             </div>
-            
+
             {/* Profile */}
             <div className="relative">
-              <button 
+              <button
                 onClick={() => setShowProfileMenu(!showProfileMenu)}
                 className="flex items-center space-x-2 p-2 rounded-lg hover:bg-gray-100 transition-colors"
               >
@@ -134,7 +127,7 @@ export const Header: React.FC<HeaderProps> = ({ onMenuToggle, title, onViewAllBu
                   <p className="text-xs font-medium text-emerald-600 capitalize">{userRole}</p>
                 </div>
               </button>
-              
+
               {showProfileMenu && (
                 <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
                   <div className="p-4 border-b border-gray-200">
@@ -149,7 +142,7 @@ export const Header: React.FC<HeaderProps> = ({ onMenuToggle, title, onViewAllBu
                     </div>
                   </div>
                   <div className="p-2">
-                    <button 
+                    <button
                       onClick={handleSignOut}
                       className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md flex items-center space-x-2 transition-colors"
                     >
@@ -163,11 +156,18 @@ export const Header: React.FC<HeaderProps> = ({ onMenuToggle, title, onViewAllBu
           </div>
         </div>
       </div>
-      
+
+      {/* Business Selector - Now below main header content */}
+      <div className="w-full py-2 border-b border-gray-200">
+        <div className="max-w-7xl mx-auto px-4"> {/* Constrain and center content */}
+          <BusinessSelector onViewAllBusinesses={onViewAllBusinesses} />
+        </div>
+      </div>
+
       {/* Click outside to close menus */}
       {(showProfileMenu || showNotifications) && (
-        <div 
-          className="fixed inset-0 z-40" 
+        <div
+          className="fixed inset-0 z-40"
           onClick={() => {
             setShowProfileMenu(false);
             setShowNotifications(false);

@@ -8,11 +8,13 @@ import {
   FileText,
   Settings,
   X,
-  Menu // Import Menu icon for the toggle button
-} from 'lucide-react';
+  Menu,
+  PawPrint
+} from 'lucide-react'; // Corrected line
 import { useBusiness } from '../../context/BusinessContext';
 import livestockProLogo from '../../assets/livestockpro-logo.png'; // Assuming a path to your logo
 
+// ... rest of your component code
 interface SidebarProps {
   isOpen: boolean;
   onClose: () => void;
@@ -27,7 +29,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, onOpen, activ
   const getNavigation = () => {
     const baseNavigation = [
       { id: 'dashboard', name: 'Dashboard', icon: BarChart3 },
-      { id: 'goats', name: 'Goat Management', icon: Users },
+      { id: 'goats', name: 'Goat Management', icon: PawPrint },
       { id: 'health', name: 'Health Records', icon: Activity },
       { id: 'scanner', name: 'QR Scanner', icon: Camera },
       { id: 'settings', name: 'Settings', icon: Settings },

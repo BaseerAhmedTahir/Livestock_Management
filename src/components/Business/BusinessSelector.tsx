@@ -17,7 +17,8 @@ export const BusinessSelector: React.FC<BusinessSelectorProps> = ({ onViewAllBus
   if (userRole === 'caretaker' && businesses.length <= 1) {
     // Show business name for caretakers but without dropdown
     return activeBusiness ? (
-      <div className="flex items-center justify-center space-x-2 px-3 py-2 bg-gray-100 border border-gray-300 rounded-lg w-full"> {/* Added justify-center here */}
+      // Changed to justify-center for centered text
+      <div className="flex items-center justify-center space-x-2 px-3 py-2 bg-gray-100 border border-gray-300 rounded-lg w-full">
         <Building2 className="h-4 w-4 text-gray-500" />
         <span className="text-sm font-medium text-gray-900 truncate">
           {activeBusiness.name}
@@ -98,7 +99,8 @@ export const BusinessSelector: React.FC<BusinessSelectorProps> = ({ onViewAllBus
       <div className="relative w-full">
         <button
           onClick={() => setIsOpen(!isOpen)}
-          className="flex items-center justify-center space-x-2 px-3 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors w-full" // Added justify-center here
+          // Added justify-center for centered text
+          className="flex items-center justify-center space-x-2 px-3 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors w-full"
         >
           <Building2 className="h-4 w-4 text-gray-500" />
           <span className="text-sm font-medium text-gray-900 truncate">

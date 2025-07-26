@@ -1,5 +1,5 @@
 import React from 'react';
-import { Menu, Bell, User, BarChart3, Settings, LogOut } from 'lucide-react';
+import { Menu, Bell, User, BarChart3, LogOut } from 'lucide-react';
 import { format } from 'date-fns';
 import { useAuth } from '../../hooks/useAuth';
 import { useApp } from '../../context/AppContext';
@@ -45,17 +45,17 @@ export const Header: React.FC<HeaderProps> = ({ onMenuToggle, title, onViewAllBu
   };
 
   return (
-    <header className="bg-white shadow-md border-b border-gray-200">
-      {/* Business Selector - This section will now always be at the top and full width */}
-      <div className="w-full px-4 py-2 border-b border-gray-200">
-        <div className="max-w-7xl mx-auto"> {/* Added max-w-7xl and mx-auto for content alignment */}
+    <header className="bg-white shadow-sm border-b border-gray-200"> {/* Softer shadow */}
+      {/* Business Selector - Distinct top section */}
+      <div className="w-full py-2 border-b border-gray-200">
+        <div className="max-w-7xl mx-auto px-4"> {/* Constrain and center content */}
           <BusinessSelector onViewAllBusinesses={onViewAllBusinesses} />
         </div>
       </div>
 
-      {/* Main header content */}
-      <div className="max-w-7xl mx-auto">
-        <div className="flex items-center justify-between h-16 px-4">
+      {/* Main header content row */}
+      <div className="max-w-7xl mx-auto px-4"> {/* Apply padding here */}
+        <div className="flex items-center justify-between h-16">
           {/* Left section */}
           <div className="flex items-center space-x-4">
             <button

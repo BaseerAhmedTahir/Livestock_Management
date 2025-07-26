@@ -20,7 +20,8 @@ import { GlobalBusinessDashboard } from './components/Dashboard/GlobalBusinessDa
 
 function AppContent() {
   const [activeTab, setActiveTab] = useState('dashboard');
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  // Initialize sidebarOpen to true so it's open by default on desktop
+  const [sidebarOpen, setSidebarOpen] = useState(true); 
   const [showGlobalDashboard, setShowGlobalDashboard] = useState(false);
   const { user, loading, signOut } = useAuth();
   const { activeBusiness, loading: businessLoading, setActiveBusiness, businesses, userRole, caretakerPermissions } = useBusiness();
@@ -146,13 +147,16 @@ function AppContent() {
 
   return (
     <div className="min-h-screen bg-gray-50 flex">
+      {/* Sidebar Component */}
       <Sidebar
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
+        onOpen={() => setSidebarOpen(true)} // Pass onOpen prop
         activeTab={activeTab}
         onTabChange={setActiveTab}
       />
       
+      {/* Overlay for when sidebar is open on small screens */}
       {sidebarOpen && (
         <div
           className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
@@ -160,7 +164,11 @@ function AppContent() {
         />
       )}
 
-      <div className="flex-1 flex flex-col overflow-hidden">
+      {/* Main Content Area - dynamically adjust margin based on sidebar state */}
+      <div className={`
+          flex-1 flex flex-col overflow-hidden transition-all duration-300 ease-in-out
+          ${sidebarOpen ? 'ml-64' : 'ml-0 lg:ml-20'} 
+      `}>
         <Header
           onMenuToggle={() => setSidebarOpen(!sidebarOpen)}
           title={getPageTitle()}

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Phone, Mail, MapPin, DollarSign, Users, Edit, Trash2, UserPlus, Key, CheckCircle, XCircle } from 'lucide-react';
+import { Plus, Phone, Mail, MapPin, DollarSign, Users, Edit, Trash2, UserPlus, Key, CheckCircle, XCircle, ChevronDown, ChevronUp } from 'lucide-react';
 import { format } from 'date-fns';
 import { useApp } from '../../context/AppContext';
 import { useAuth } from '../../hooks/useAuth';
@@ -20,6 +20,7 @@ export const CaretakerManagement: React.FC = () => {
   const [invitingCaretaker, setInvitingCaretaker] = useState<Caretaker | null>(null);
   const [selectedCaretakerUserBusinessRole, setSelectedCaretakerUserBusinessRole] = useState<UserBusinessRole | null>(null);
   const [loadingPermissions, setLoadingPermissions] = useState(false);
+  const [isPermissionsExpanded, setIsPermissionsExpanded] = useState(true); // New state for accordion
 
   const selectedCaretaker = caretakers.find(c => c.id === selectedCaretakerId);
   const assignedGoats = selectedCaretaker ? goats.filter(g => g.caretakerId === selectedCaretaker.id) : [];
@@ -434,87 +435,103 @@ export const CaretakerManagement: React.FC = () => {
 
               {/* Tab Permissions Section */}
               <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-900">Tab Permissions</h3>
-                    <p className="text-sm text-gray-600">Control which sections this caretaker can access</p>
+                <div 
+                  className="flex items-center justify-between cursor-pointer" 
+                  onClick={() => setIsPermissionsExpanded(!isPermissionsExpanded)}
+                >
+                  <div className="flex items-center"> {/* Added a div for flexible spacing */}
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-900">Tab Permissions</h3>
+                      <p className="text-sm text-gray-600">Control which sections this caretaker can access</p>
+                    </div>
                   </div>
-                  {loadingPermissions && (
-                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-emerald-600"></div>
-                  )}
+                  <div className="flex items-center">
+                    {loadingPermissions && (
+                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-emerald-600 mr-2"></div>
+                    )}
+                    {isPermissionsExpanded ? (
+                      <ChevronUp className="h-5 w-5 text-gray-500" />
+                    ) : (
+                      <ChevronDown className="h-5 w-5 text-gray-500" />
+                    )}
+                  </div>
                 </div>
 
-                {!selectedCaretaker.contactInfo.email || !selectedCaretakerUserBusinessRole ? (
-                  <div className="text-center py-8 bg-gray-50 rounded-lg">
-                    <Key className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-                    <h4 className="font-medium text-gray-900 mb-2">No Account Access</h4>
-                    <p className="text-gray-600 text-sm mb-4">
-                      This caretaker doesn't have a system account yet. Create an account first to manage permissions.
-                    </p>
-                    <button
-                      onClick={() => handleInviteCaretaker(selectedCaretaker)}
-                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                    >
-                      Create Account
-                    </button>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {availableTabs.map((tab) => {
-                      const isEnabled = selectedCaretakerUserBusinessRole.permissions?.[tab.id] ?? false;
-                      const isOwnerFeature = ['caretakers', 'finances', 'reports'].includes(tab.id);
-                      
-                      return (
-                        <div key={tab.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                          <div className="flex-1">
-                            <div className="flex items-center space-x-2">
-                              <h4 className="font-medium text-gray-900">{tab.name}</h4>
-                              {isOwnerFeature && (
-                                <span className="px-2 py-1 text-xs bg-orange-100 text-orange-800 rounded-full">
-                                  Owner Feature
+                {isPermissionsExpanded && ( // Conditionally render content
+                  <div className="mt-4">
+                    {!selectedCaretaker.contactInfo.email || !selectedCaretakerUserBusinessRole ? (
+                      <div className="text-center py-8 bg-gray-50 rounded-lg">
+                        <Key className="h-12 w-12 text-gray-300 mx-auto mb-3" />
+                        <h4 className="font-medium text-gray-900 mb-2">No Account Access</h4>
+                        <p className="text-gray-600 text-sm mb-4">
+                          This caretaker doesn't have a system account yet. Create an account first to manage permissions.
+                        </p>
+                        <button
+                          onClick={() => handleInviteCaretaker(selectedCaretaker)}
+                          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                        >
+                          Create Account
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        {availableTabs.map((tab) => {
+                          const isEnabled = selectedCaretakerUserBusinessRole.permissions?.[tab.id] ?? false;
+                          const isOwnerFeature = ['caretakers', 'finances', 'reports'].includes(tab.id);
+                          
+                          return (
+                            <div key={tab.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                              <div className="flex-1">
+                                <div className="flex items-center space-x-2">
+                                  <h4 className="font-medium text-gray-900">{tab.name}</h4>
+                                  {isOwnerFeature && (
+                                    <span className="px-2 py-1 text-xs bg-orange-100 text-orange-800 rounded-full">
+                                      Owner Feature
+                                    </span>
+                                  )}
+                                </div>
+                                <p className="text-sm text-gray-600 mt-1">{tab.description}</p>
+                              </div>
+                              <div className="flex items-center">
+                                <label className="relative inline-flex items-center cursor-pointer">
+                                  <input
+                                    type="checkbox"
+                                    checked={isEnabled}
+                                    onChange={(e) => handlePermissionToggle(tab.id, e.target.checked)}
+                                    className="sr-only peer"
+                                    disabled={loadingPermissions}
+                                  />
+                                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-emerald-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600"></div>
+                                </label>
+                                <span className="ml-3 text-sm font-medium text-gray-700">
+                                  {isEnabled ? 'Enabled' : 'Disabled'}
                                 </span>
-                              )}
+                              </div>
                             </div>
-                            <p className="text-sm text-gray-600 mt-1">{tab.description}</p>
-                          </div>
-                          <div className="flex items-center">
-                            <label className="relative inline-flex items-center cursor-pointer">
-                              <input
-                                type="checkbox"
-                                checked={isEnabled}
-                                onChange={(e) => handlePermissionToggle(tab.id, e.target.checked)}
-                                className="sr-only peer"
-                                disabled={loadingPermissions}
-                              />
-                              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-emerald-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600"></div>
-                            </label>
-                            <span className="ml-3 text-sm font-medium text-gray-700">
-                              {isEnabled ? 'Enabled' : 'Disabled'}
-                            </span>
-                          </div>
-                        </div>
-                      );
-                    })}
-                    
-                    <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                      <div className="flex items-start">
-                        <div className="flex-shrink-0">
-                          <svg className="h-5 w-5 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
-                            <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-                          </svg>
-                        </div>
-                        <div className="ml-3">
-                          <h4 className="text-sm font-medium text-blue-900">Permission Notes</h4>
-                          <div className="mt-1 text-sm text-blue-700">
-                            <ul className="list-disc list-inside space-y-1">
-                              <li>Changes take effect immediately when the caretaker refreshes their browser</li>
-                              <li>Owner features (Caretakers, Finances, Reports) should be granted carefully</li>
-                              <li>Dashboard and Settings are recommended for all caretakers</li>
-                            </ul>
+                          );
+                        })}
+                        
+                        <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                          <div className="flex items-start">
+                            <div className="flex-shrink-0">
+                              <svg className="h-5 w-5 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
+                                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                              </svg>
+                            </div>
+                            <div className="ml-3">
+                              <h4 className="text-sm font-medium text-blue-900">Permission Notes</h4>
+                              <div className="mt-1 text-sm text-blue-700">
+                                <ul className="list-disc list-inside space-y-1">
+                                  <li>Changes take effect immediately when the caretaker refreshes their browser</li>
+                                  <li>Owner features (Caretakers, Finances, Reports) should be granted carefully</li>
+                                  <li>Dashboard and Settings are recommended for all caretakers</li>
+                                </ul>
+                              </div>
+                            </div>
                           </div>
                         </div>
                       </div>
-                    </div>
+                    )}
                   </div>
                 )}
               </div>

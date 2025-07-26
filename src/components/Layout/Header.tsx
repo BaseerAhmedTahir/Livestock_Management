@@ -1,5 +1,5 @@
 import React from 'react';
-import { Menu, Bell, User, BarChart3, LogOut } from 'lucide-react';
+import { Bell, User, BarChart3, LogOut } from 'lucide-react'; // Removed Menu import
 import { format } from 'date-fns';
 import { useAuth } from '../../hooks/useAuth';
 import { useApp } from '../../context/AppContext';
@@ -7,12 +7,13 @@ import { useBusiness } from '../../context/BusinessContext';
 import { BusinessSelector } from '../Business/BusinessSelector';
 
 interface HeaderProps {
-  onMenuToggle: () => void;
+  // onMenuToggle is no longer needed if the hamburger is removed
+  // onMenuToggle: () => void; // You can remove this line from the interface if not used elsewhere
   title: string;
   onViewAllBusinesses?: () => void;
 }
 
-export const Header: React.FC<HeaderProps> = ({ onMenuToggle, title, onViewAllBusinesses }) => {
+export const Header: React.FC<HeaderProps> = ({ /* onMenuToggle, */ title, onViewAllBusinesses }) => {
   const { user, signOut } = useAuth();
   const { healthRecords, goats } = useApp();
   const { userRole } = useBusiness();
@@ -51,12 +52,15 @@ export const Header: React.FC<HeaderProps> = ({ onMenuToggle, title, onViewAllBu
         <div className="flex items-center justify-between h-16">
           {/* Left section */}
           <div className="flex items-center space-x-4">
+            {/* REMOVED: The hamburger button entirely */}
+            {/*
             <button
               onClick={onMenuToggle}
-              className="lg:hidden p-2 rounded-md hover:bg-gray-100 transition-colors"
+              className="p-2 rounded-md hover:bg-gray-100 transition-colors"
             >
               <Menu className="h-6 w-6 text-gray-600" />
             </button>
+            */}
             <div className="flex items-center space-x-3">
               <div className="bg-emerald-100 p-2 rounded-lg">
                 <BarChart3 className="h-6 w-6 text-emerald-600" />

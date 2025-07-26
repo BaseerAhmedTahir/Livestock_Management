@@ -12,19 +12,15 @@ interface DashboardProps {
   onViewAllBusinesses?: () => void;
 }
 
-/**
- * Dashboard overview page.
- * Named export so the rest of the app can `import { Dashboard } ...`
- */
 export const Dashboard: React.FC<DashboardProps> = memo(
   ({ onViewAllBusinesses }) => {
     const { goats, loading, error } = useApp();
     const { businesses, userRole } = useBusiness();
 
-    /* ------------------------- loading / error / empty ------------------------ */
+    /* ------------------------- Loading / Error / Empty ------------------------ */
     if (loading) return <LoadingSpinner />;
 
-    if (error) {
+    if (error)
       return (
         <section className="mx-auto max-w-md px-4 pt-8">
           <div
@@ -37,9 +33,8 @@ export const Dashboard: React.FC<DashboardProps> = memo(
           </div>
         </section>
       );
-    }
 
-    if (goats.length === 0) {
+    if (goats.length === 0)
       return (
         <section className="mx-auto max-w-lg px-4 pt-10 text-center">
           <header className="mb-8">
@@ -78,12 +73,11 @@ export const Dashboard: React.FC<DashboardProps> = memo(
           </div>
         </section>
       );
-    }
 
-    /* -------------------------------- main view -------------------------------- */
+    /* --------------------------------  View  --------------------------------- */
     return (
       <section className="mx-auto max-w-7xl px-4 pt-6 pb-10 md:px-6 lg:px-8">
-        {/* heading */}
+        {/* Heading */}
         <header className="mb-6 flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
           <div>
             <h2 className="text-2xl font-extrabold tracking-tight text-gray-900 dark:text-gray-50">
@@ -108,10 +102,10 @@ export const Dashboard: React.FC<DashboardProps> = memo(
             )}
         </header>
 
-        {/* stats */}
+        {/* KPI cards (hide Owner-Earnings if it equals Net-Profit) */}
         <DashboardStats />
 
-        {/* chart + activity */}
+        {/* Chart + Activity */}
         <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
           <PerformanceChart />
           <RecentActivity />

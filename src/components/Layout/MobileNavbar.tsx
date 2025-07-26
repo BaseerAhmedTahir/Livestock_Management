@@ -6,7 +6,8 @@ import {
   DollarSign, 
   Camera,
   Settings,
-  FileText
+  FileText,
+  PawPrint
 } from 'lucide-react';
 import { useBusiness } from '../../context/BusinessContext';
 
@@ -21,7 +22,7 @@ export const MobileNavbar: React.FC<MobileNavbarProps> = ({ activeTab, onTabChan
   const getNavigation = () => {
     const baseNavigation = [
       { id: 'dashboard', name: 'Dashboard', icon: BarChart3 },
-      { id: 'goats', name: 'Goats', icon: Users },
+      { id: 'goats', name: 'Goats', icon: PawPrint },
       { id: 'health', name: 'Health', icon: Activity },
       { id: 'caretakers', name: 'Caretakers', icon: Users },
       { id: 'finances', name: 'Finances', icon: DollarSign },

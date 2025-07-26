@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useAuth } from './hooks/useAuth';
 import { AuthForm } from './components/Auth/AuthForm';
 import { BusinessProvider } from './context/BusinessContext';
@@ -20,25 +20,41 @@ import { GlobalBusinessDashboard } from './components/Dashboard/GlobalBusinessDa
 
 function AppContent() {
   const [activeTab, setActiveTab] = useState('dashboard');
-  // Initialize sidebarOpen to true so it's open by default on desktop
-  const [sidebarOpen, setSidebarOpen] = useState(true); 
+
+  // ✅ Sidebar open by default only on desktop
+  const [sidebarOpen, setSidebarOpen] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return window.innerWidth >= 1024; // lg breakpoint
+    }
+    return true;
+  });
+
   const [showGlobalDashboard, setShowGlobalDashboard] = useState(false);
+
   const { user, loading, signOut } = useAuth();
-  const { activeBusiness, loading: businessLoading, setActiveBusiness, businesses, userRole, caretakerPermissions } = useBusiness();
+  const {
+    activeBusiness,
+    loading: businessLoading,
+    setActiveBusiness,
+    businesses,
+    userRole,
+    caretakerPermissions
+  } = useBusiness();
 
-  if (loading || businessLoading) {
-    return <LoadingSpinner />;
-  }
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth < 1024) {
+        setSidebarOpen(false);
+      }
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
-  if (!user) {
-    return <AuthForm />;
-  }
+  if (loading || businessLoading) return <LoadingSpinner />;
+  if (!user) return <AuthForm />;
+  if (!activeBusiness) return <BusinessSetupPrompt />;
 
-  if (!activeBusiness) {
-    return <BusinessSetupPrompt />;
-  }
-
-  // Handle global dashboard view
   if (showGlobalDashboard) {
     return (
       <div className="min-h-screen bg-gray-50">
@@ -79,7 +95,7 @@ function AppContent() {
   };
 
   const renderContent = () => {
-    const accessDeniedMessage = (feature: string) => (
+    const accessDenied = (feature: string) => (
       <div className="text-center py-12">
         <p className="text-gray-500">Access denied. You don't have permission to view {feature}.</p>
       </div>
@@ -87,33 +103,33 @@ function AppContent() {
 
     switch (activeTab) {
       case 'dashboard':
-        return (userRole === 'owner' || (caretakerPermissions && caretakerPermissions.dashboard)) 
+        return (userRole === 'owner' || (caretakerPermissions?.dashboard))
           ? <Dashboard onViewAllBusinesses={businesses.length > 1 ? () => setShowGlobalDashboard(true) : undefined} />
-          : accessDeniedMessage('dashboard');
+          : accessDenied('dashboard');
       case 'goats':
-        return (userRole === 'owner' || (caretakerPermissions && caretakerPermissions.goats))
+        return (userRole === 'owner' || (caretakerPermissions?.goats))
           ? <GoatList />
-          : accessDeniedMessage('goat management');
+          : accessDenied('goat management');
       case 'health':
-        return (userRole === 'owner' || (caretakerPermissions && caretakerPermissions.health))
+        return (userRole === 'owner' || (caretakerPermissions?.health))
           ? <HealthRecords />
-          : accessDeniedMessage('health records');
+          : accessDenied('health records');
       case 'caretakers':
-        return (userRole === 'owner' || (caretakerPermissions && caretakerPermissions.caretakers))
+        return (userRole === 'owner' || (caretakerPermissions?.caretakers))
           ? <CaretakerManagement />
-          : accessDeniedMessage('caretaker management');
+          : accessDenied('caretaker management');
       case 'finances':
-        return (userRole === 'owner' || (caretakerPermissions && caretakerPermissions.finances))
+        return (userRole === 'owner' || (caretakerPermissions?.finances))
           ? <FinanceManagement />
-          : accessDeniedMessage('finances');
+          : accessDenied('finances');
       case 'scanner':
-        return (userRole === 'owner' || (caretakerPermissions && caretakerPermissions.scanner))
+        return (userRole === 'owner' || (caretakerPermissions?.scanner))
           ? <QRScanner />
-          : accessDeniedMessage('QR scanner');
+          : accessDenied('QR scanner');
       case 'reports':
-        return (userRole === 'owner' || (caretakerPermissions && caretakerPermissions.reports))
+        return (userRole === 'owner' || (caretakerPermissions?.reports))
           ? <Reports />
-          : accessDeniedMessage('reports');
+          : accessDenied('reports');
       case 'settings':
         return (
           <div className="space-y-6">
@@ -147,16 +163,16 @@ function AppContent() {
 
   return (
     <div className="min-h-screen bg-gray-50 flex">
-      {/* Sidebar Component */}
+      {/* Sidebar */}
       <Sidebar
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
-        onOpen={() => setSidebarOpen(true)} // Pass onOpen prop
+        onOpen={() => setSidebarOpen(true)}
         activeTab={activeTab}
         onTabChange={setActiveTab}
       />
-      
-      {/* Overlay for when sidebar is open on small screens */}
+
+      {/* Mobile Sidebar Overlay */}
       {sidebarOpen && (
         <div
           className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
@@ -164,24 +180,24 @@ function AppContent() {
         />
       )}
 
-      {/* Main Content Area - dynamically adjust margin based on sidebar state */}
+      {/* Main Content */}
       <div className={`
-          flex-1 flex flex-col overflow-hidden transition-all duration-300 ease-in-out
-          ${sidebarOpen ? 'ml-64' : 'ml-0 lg:ml-20'} 
+        flex-1 flex flex-col overflow-hidden transition-all duration-300 ease-in-out
+        ${sidebarOpen ? 'ml-64' : 'ml-0 lg:ml-20'}
       `}>
         <Header
           onMenuToggle={() => setSidebarOpen(!sidebarOpen)}
           title={getPageTitle()}
           onViewAllBusinesses={businesses.length > 1 ? () => setShowGlobalDashboard(true) : undefined}
         />
-        
+
         <main className="flex-1 overflow-x-hidden overflow-y-auto pb-16 lg:pb-6">
           <div className="max-w-7xl mx-auto px-4 py-6">
             {renderContent()}
           </div>
         </main>
 
-        <MobileNavbar 
+        <MobileNavbar
           activeTab={activeTab}
           onTabChange={setActiveTab}
         />
@@ -192,7 +208,7 @@ function AppContent() {
 
 function App() {
   const { user } = useAuth();
-  
+
   return (
     <BusinessProvider user={user}>
       <AppProvider>

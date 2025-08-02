@@ -11,7 +11,15 @@ const localStoragePersister = createSyncStoragePersister({
   storage: window.localStorage,
   key: 'LIVESTOCK_PRO_CACHE',
   serialize: JSON.stringify,
-  deserialize: JSON.parse,
+  deserialize: (value: string) => {
+    return JSON.parse(value, (key, val) => {
+      // Check if the value is a string that looks like an ISO date
+      if (typeof val === 'string' && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{3})?Z?$/.test(val)) {
+        return new Date(val);
+      }
+      return val;
+    });
+  },
 });
 
 // Create a client

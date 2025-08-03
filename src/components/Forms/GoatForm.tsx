@@ -107,6 +107,38 @@ export const GoatForm: React.FC<GoatFormProps> = ({
     }
   }, [goat, isEdit, isOpen]);
 
+  // Reset form with goat data when editing
+  React.useEffect(() => {
+    if (isEdit && goat && isOpen) {
+      reset({
+        tagNumber: goat.tagNumber,
+        nickname: goat.nickname ?? '',
+        breed: goat.breed,
+        gender: goat.gender,
+        dateOfBirth: goat.dateOfBirth.toISOString().split('T')[0],
+        color: goat.color ?? '',
+        currentWeight: goat.currentWeight,
+        purchasePrice: goat.purchasePrice,
+        purchaseDate: goat.purchaseDate.toISOString().split('T')[0],
+        caretakerId: goat.caretakerId ?? '',
+      });
+    } else if (!isEdit && isOpen) {
+      // Reset to default values when adding new goat
+      reset({
+        tagNumber: '',
+        nickname: '',
+        breed: '',
+        gender: 'Male',
+        dateOfBirth: '',
+        color: '',
+        currentWeight: 0,
+        purchasePrice: 0,
+        purchaseDate: new Date().toISOString().split('T')[0],
+        caretakerId: '',
+      });
+    }
+  }, [goat, isEdit, isOpen, reset]);
+
   /* ────────── Helpers ────────── */
   const openPicker = () => fileRef.current?.click();
   

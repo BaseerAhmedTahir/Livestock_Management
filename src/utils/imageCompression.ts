@@ -5,13 +5,15 @@ export const compressImage = (file: File): Promise<File> => {
     reader.onload = (event) => {
       const img = new Image();
       img.src = event.target?.result as string;
+
       img.onload = () => {
         const canvas = document.createElement('canvas');
         const ctx = canvas.getContext('2d');
 
-        // Set max dimensions - much smaller for faster uploads (80-90% reduction)
-        const maxWidth = 400;
-        const maxHeight = 300;
+        // Balanced size: not too small, not too large
+        const maxWidth = 800;
+        const maxHeight = 800;
+
         let width = img.width;
         let height = img.height;
 
@@ -31,8 +33,8 @@ export const compressImage = (file: File): Promise<File> => {
         canvas.height = height;
         ctx?.drawImage(img, 0, 0, width, height);
 
-        let quality = 0.4; // Initial quality (40%) - very aggressive compression for 80-90% reduction
-        const maxFileSize = 100 * 1024; // 100 KB - much smaller target size
+        let quality = 0.7; // Start with high-ish quality
+        const maxFileSize = 250 * 1024; // 250 KB target size (tunable)
 
         const attemptCompression = () => {
           canvas.toBlob(
@@ -42,9 +44,10 @@ export const compressImage = (file: File): Promise<File> => {
                 return;
               }
 
-              if (blob.size > maxFileSize && quality > 0.1) {
-                quality -= 0.02; // Reduce quality by 2% for finer control
-                attemptCompression(); // Re-attempt with lower quality
+              // Keep trying until we hit file size or quality floor
+              if (blob.size > maxFileSize && quality > 0.4) {
+                quality -= 0.05;
+                attemptCompression();
               } else {
                 resolve(new File([blob], file.name, { type: 'image/jpeg', lastModified: Date.now() }));
               }
@@ -56,8 +59,10 @@ export const compressImage = (file: File): Promise<File> => {
 
         attemptCompression();
       };
+
       img.onerror = (err) => reject(err);
     };
+
     reader.onerror = (err) => reject(err);
   });
 };

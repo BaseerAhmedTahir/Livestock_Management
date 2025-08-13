@@ -8,6 +8,8 @@ import {
   TrendingDown,
   Plus,
   Calendar,
+  Edit,
+  Trash2,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import {
@@ -86,7 +88,7 @@ const StatCard: React.FC<{
 /*  Main component                                                             */
 /* -------------------------------------------------------------------------- */
 export const FinanceManagement: React.FC = () => {
-  const { goats, expenses, caretakers, healthRecords } = useApp();
+  const { goats, expenses, caretakers, healthRecords, deleteExpense } = useApp();
   const { activeBusiness } = useBusiness();
 
   /* ---------------------------- component state --------------------------- */
@@ -94,6 +96,8 @@ export const FinanceManagement: React.FC = () => {
     'overview'
   );
   const [isFormOpen, setFormOpen] = useState(false);
+  const [editingExpense, setEditingExpense] = useState<typeof expenses[0] | null>(null);
+  const [isEditMode, setIsEditMode] = useState(false);
 
   /* -------------------------- helper / formatting ------------------------- */
   const formatCurrency = (amount: number) =>
@@ -176,6 +180,36 @@ export const FinanceManagement: React.FC = () => {
       return { ...c, goatsManaged: managed.length, earnings };
     });
   }, [caretakers, soldGoats, activeBusiness]);
+
+  const handleEditExpense = (expense: typeof expenses[0]) => {
+    setEditingExpense(expense);
+    setIsEditMode(true);
+    setFormOpen(true);
+  };
+
+  const handleDeleteExpense = async (expense: typeof expenses[0]) => {
+    const confirmed = window.confirm(
+      `Are you sure you want to delete this expense?\n\n` +
+      `${expense.description} - ₹${expense.amount.toLocaleString()}\n` +
+      `Date: ${format(expense.date, 'MMM dd, yyyy')}\n\n` +
+      `This action cannot be undone.`
+    );
+
+    if (!confirmed) return;
+
+    try {
+      await deleteExpense(expense.id);
+    } catch (error) {
+      console.error('Error deleting expense:', error);
+      alert('Failed to delete expense. Please try again.');
+    }
+  };
+
+  const handleCloseForm = () => {
+    setFormOpen(false);
+    setEditingExpense(null);
+    setIsEditMode(false);
+  };
 
   /* expense breakdown ------------------------------------------------------- */
   const expenseData = useMemo(() => {
@@ -635,8 +669,8 @@ export const FinanceManagement: React.FC = () => {
               {expenses.map((e) => {
                 const goat = e.goatId ? goats.find((g) => g.id === e.goatId) : null;
                 return (
-                  <div key={e.id} className="p-4 sm:p-6 flex flex-col sm:flex-row justify-between gap-3">
-                    <div className="space-y-1 min-w-0">
+                  <div key={e.id} className="p-4 sm:p-6 flex flex-col sm:flex-row justify-between items-start gap-3">
+                    <div className="space-y-1 min-w-0 flex-1">
                       <h4 className="font-semibold text-gray-900 dark:text-gray-100 truncate">
                         {e.description}
                       </h4>
@@ -653,10 +687,28 @@ export const FinanceManagement: React.FC = () => {
                         {format(e.date, 'MMM dd, yyyy')}
                       </div>
                     </div>
-                    <div className="text-right whitespace-nowrap">
+                    <div className="flex items-center gap-3">
+                      <div className="text-right whitespace-nowrap">
                       <p className="text-lg font-semibold text-red-600 dark:text-red-400">
                         -{formatCurrency(e.amount)}
                       </p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => handleEditExpense(e)}
+                          className="p-2 text-blue-600 hover:text-blue-800 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
+                          title="Edit expense"
+                        >
+                          <Edit className="h-4 w-4" />
+                        </button>
+                        <button
+                          onClick={() => handleDeleteExpense(e)}
+                          className="p-2 text-red-600 hover:text-red-800 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                          title="Delete expense"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
                     </div>
                   </div>
                 );
@@ -738,7 +790,12 @@ export const FinanceManagement: React.FC = () => {
       )}
 
       {/* transaction modal */}
-      <TransactionForm isOpen={isFormOpen} onClose={() => setFormOpen(false)} />
+      <TransactionForm 
+        isOpen={isFormOpen} 
+        onClose={handleCloseForm}
+        expense={editingExpense || undefined}
+        isEdit={isEditMode}
+      />
     </div>
   );
 };

@@ -2,10 +2,13 @@ import React from 'react';
 import { useForm } from 'react-hook-form';
 import { X } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
+import { Expense } from '../../types';
 
 interface TransactionFormProps {
   isOpen: boolean;
   onClose: () => void;
+  expense?: Expense;
+  isEdit?: boolean;
 }
 
 interface TransactionFormData {
@@ -19,13 +22,22 @@ interface TransactionFormData {
   category: string;
 }
 
-export const TransactionForm: React.FC<TransactionFormProps> = ({ isOpen, onClose }) => {
-  const { goats, addExpense } = useApp();
+export const TransactionForm: React.FC<TransactionFormProps> = ({ isOpen, onClose, expense, isEdit = false }) => {
+  const { goats, addExpense, updateExpense } = useApp();
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   
   const { register, handleSubmit, reset, watch, formState: { errors } } = useForm<TransactionFormData>({
-    defaultValues: {
+    defaultValues: expense ? {
+      type: 'Expense',
+      goatId: expense.goatId || '',
+      amount: expense.amount,
+      date: expense.date.toISOString().split('T')[0],
+      description: expense.description,
+      vendor: '',
+      buyer: '',
+      category: expense.category
+    } : {
       type: 'Expense',
       goatId: '',
       amount: 0,
@@ -37,6 +49,22 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({ isOpen, onClos
     }
   });
 
+  // Update form when expense prop changes
+  React.useEffect(() => {
+    if (expense && isEdit) {
+      reset({
+        type: 'Expense',
+        goatId: expense.goatId || '',
+        amount: expense.amount,
+        date: expense.date.toISOString().split('T')[0],
+        description: expense.description,
+        vendor: '',
+        buyer: '',
+        category: expense.category
+      });
+    }
+  }, [expense, isEdit, reset]);
+
   const transactionType = watch('type');
 
   const onSubmit = async (data: TransactionFormData) => {
@@ -46,13 +74,19 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({ isOpen, onClos
     setError(null);
 
     try {
-      await addExpense({
+      const expenseData = {
         goatId: data.goatId || undefined,
         category: data.category as 'Feed' | 'Medicine' | 'Transport' | 'Veterinary' | 'Other',
         amount: Number(data.amount),
         date: new Date(data.date),
         description: data.description
-      });
+      };
+
+      if (isEdit && expense) {
+        await updateExpense(expense.id, expenseData);
+      } else {
+        await addExpense(expenseData);
+      }
 
       onClose();
       // Reset form after successful submission and modal close
@@ -73,7 +107,9 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({ isOpen, onClos
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white dark:bg-neutral-800 rounded-2xl w-full max-w-full sm:max-w-md max-h-[90vh] overflow-y-auto shadow-xl border border-neutral-200 dark:border-neutral-700 pb-20">
         <div className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-200 dark:border-gray-700">
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-neutral-100">Add Transaction</h2>
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-neutral-100">
+            {isEdit ? 'Edit Expense' : 'Add Transaction'}
+          </h2>
           <button
             onClick={onClose}
             className="p-2 hover:bg-gray-100 dark:hover:bg-neutral-700 rounded-full transition-colors"
@@ -196,7 +232,7 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({ isOpen, onClos
               disabled={loading}
               className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors"
             >
-              {loading ? 'Saving...' : 'Add Expense'}
+              {loading ? 'Saving...' : isEdit ? 'Update Expense' : 'Add Expense'}
             </button>
           </div>
         </form>

@@ -18,6 +18,8 @@ interface AppContextType extends AppState {
   deleteHealthRecord: (id: string) => Promise<void>;
   addWeightRecord: (record: Omit<WeightRecord, 'id'>) => Promise<void>;
   addExpense: (expense: Omit<Expense, 'id'>) => Promise<void>;
+  updateExpense: (id: string, updates: Partial<Expense>) => Promise<void>;
+  deleteExpense: (id: string) => Promise<void>;
   assignGoatToCaretaker: (goatId: string, caretakerId: string) => void;
   sellGoat: (goatId: string, salePrice: number, saleDate: Date, buyer?: string) => Promise<void>;
   refreshData: () => Promise<void>;
@@ -44,6 +46,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     deleteHealthRecord,
     addWeightRecord,
     addExpense,
+    updateExpense,
+    deleteExpense,
     assignGoatToCaretaker,
     sellGoat,
     refreshData
@@ -65,6 +69,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     deleteHealthRecord,
     addWeightRecord,
     addExpense,
+    updateExpense,
+    deleteExpense,
     assignGoatToCaretaker,
     sellGoat,
     refreshData

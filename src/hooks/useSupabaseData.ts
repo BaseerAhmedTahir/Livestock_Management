@@ -707,6 +707,51 @@ export const useSupabaseData = (user: User | null) => {
     },
   });
 
+  const updateExpenseMutation = useMutation({
+    mutationFn: async ({ id, updates }: { id: string; updates: Partial<Expense> }) => {
+      if (!user || !activeBusiness) throw new Error('User not authenticated or no active business');
+
+      const dbUpdates: any = {};
+      
+      if (updates.goatId !== undefined) dbUpdates.goat_id = updates.goatId;
+      if (updates.caretakerId !== undefined) dbUpdates.caretaker_id = updates.caretakerId;
+      if (updates.category !== undefined) dbUpdates.category = updates.category;
+      if (updates.amount !== undefined) dbUpdates.amount = updates.amount;
+      if (updates.date !== undefined) dbUpdates.date = updates.date.toISOString().split('T')[0];
+      if (updates.description !== undefined) dbUpdates.description = updates.description;
+
+      const { error } = await supabase
+        .from('expenses')
+        .update(dbUpdates)
+        .eq('id', id)
+        .eq('business_id', activeBusiness.id);
+
+      if (error) throw error;
+      return { id, updates };
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.expenses(businessId!) });
+    },
+  });
+
+  const deleteExpenseMutation = useMutation({
+    mutationFn: async (id: string) => {
+      if (!user || !activeBusiness) throw new Error('User not authenticated or no active business');
+
+      const { error } = await supabase
+        .from('expenses')
+        .delete()
+        .eq('id', id)
+        .eq('business_id', activeBusiness.id);
+
+      if (error) throw error;
+      return id;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.expenses(businessId!) });
+    },
+  });
+
   const sellGoatMutation = useMutation({
     mutationFn: async ({ goatId, salePrice, saleDate, buyer }: { goatId: string; salePrice: number; saleDate: Date; buyer?: string }) => {
       if (!user || !activeBusiness) throw new Error('User not authenticated or no active business');
@@ -824,6 +869,14 @@ export const useSupabaseData = (user: User | null) => {
     return addExpenseMutation.mutateAsync(expenseData);
   }, [addExpenseMutation]);
 
+  const updateExpense = useCallback((id: string, updates: Partial<Expense>) => {
+    return updateExpenseMutation.mutateAsync({ id, updates });
+  }, [updateExpenseMutation]);
+
+  const deleteExpense = useCallback((id: string) => {
+    return deleteExpenseMutation.mutateAsync(id);
+  }, [deleteExpenseMutation]);
+
   const assignGoatToCaretaker = useCallback((goatId: string, caretakerId: string) => {
     return updateGoat(goatId, { caretakerId });
   }, [updateGoat]);
@@ -872,6 +925,8 @@ export const useSupabaseData = (user: User | null) => {
     deleteHealthRecord,
     addWeightRecord,
     addExpense,
+    updateExpense,
+    deleteExpense,
     assignGoatToCaretaker,
     sellGoat,
     refreshData

@@ -13,7 +13,9 @@ import {
   Trash2,
   Plus,
   Skull,
-  Copy
+  Copy,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 import { format } from 'date-fns';
 
@@ -75,6 +77,107 @@ const EmptyState: React.FC<{ icon: React.ElementType; msg: string }> = ({
   </div>
 );
 
+/* ── Image Slider Component ─────────────────────────────────────────────── */
+const ImageSlider: React.FC<{ photos: string[]; tagNumber: string }> = ({ photos, tagNumber }) => {
+  const [currentIndex, setCurrentIndex] = useState(0);
+
+  const nextImage = () => {
+    setCurrentIndex((prev) => (prev + 1) % photos.length);
+  };
+
+  const prevImage = () => {
+    setCurrentIndex((prev) => (prev - 1 + photos.length) % photos.length);
+  };
+
+  const goToImage = (index: number) => {
+    setCurrentIndex(index);
+  };
+
+  // Reset to first image when photos change
+  useEffect(() => {
+    setCurrentIndex(0);
+  }, [photos]);
+
+  if (!photos || photos.length === 0) {
+    return (
+      <div className="flex h-full min-h-[20rem] flex-col items-center justify-center gap-2 py-10 rounded-xl bg-neutral-100 dark:bg-neutral-700">
+        <Camera className="h-12 w-12 text-neutral-400" />
+        <p className="text-sm text-neutral-500">No photos available</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="relative group rounded-xl overflow-hidden bg-neutral-100 dark:bg-neutral-700 min-h-[20rem]">
+      {/* Main Image */}
+      <div className="relative h-full min-h-[20rem] overflow-hidden">
+        <img
+          src={photos[currentIndex]}
+          alt={`${tagNumber} photo ${currentIndex + 1}`}
+          className="w-full h-full object-cover transition-all duration-500 ease-in-out"
+        />
+        
+        {/* Image overlay with gradient for better button visibility */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+      </div>
+
+      {/* Navigation Buttons - Only show if more than 1 image */}
+      {photos.length > 1 && (
+        <>
+          <button
+            onClick={prevImage}
+            className="absolute left-2 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/50 text-white hover:bg-black/70 transition-all duration-300 opacity-0 group-hover:opacity-100 hover:scale-110 active:scale-95 backdrop-blur-sm"
+            aria-label="Previous image"
+          >
+            <ChevronLeft className="h-5 w-5" />
+          </button>
+          
+          <button
+            onClick={nextImage}
+            className="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/50 text-white hover:bg-black/70 transition-all duration-300 opacity-0 group-hover:opacity-100 hover:scale-110 active:scale-95 backdrop-blur-sm"
+            aria-label="Next image"
+          >
+            <ChevronRight className="h-5 w-5" />
+          </button>
+        </>
+      )}
+
+      {/* Image Counter */}
+      {photos.length > 1 && (
+        <div className="absolute top-3 right-3 px-3 py-1 bg-black/60 text-white text-xs font-medium rounded-full backdrop-blur-sm">
+          {currentIndex + 1} / {photos.length}
+        </div>
+      )}
+
+      {/* Dot Indicators - Only show if more than 1 image */}
+      {photos.length > 1 && (
+        <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-2">
+          {photos.map((_, index) => (
+            <button
+              key={index}
+              onClick={() => goToImage(index)}
+              className={`w-2 h-2 rounded-full transition-all duration-300 hover:scale-125 ${
+                index === currentIndex
+                  ? 'bg-white shadow-lg scale-125'
+                  : 'bg-white/50 hover:bg-white/75'
+              }`}
+              aria-label={`Go to image ${index + 1}`}
+            />
+          ))}
+        </div>
+      )}
+
+      {/* Keyboard navigation hint */}
+      {photos.length > 1 && (
+        <div className="absolute bottom-3 left-3 text-xs text-white/80 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+          <span className="bg-black/40 px-2 py-1 rounded backdrop-blur-sm">
+            ← → to navigate
+          </span>
+        </div>
+      )}
+    </div>
+  );
+};
 /* ── main component ─────────────────────────────────────────────────────── */
 interface Props {
   isOpen: boolean;
@@ -112,6 +215,19 @@ export const GoatModal: React.FC<Props> = ({ isOpen, onClose, goat, onEdit }) =>
     }
   }, [goat, isOpen]);
 
+  /* keyboard navigation for image slider */
+  useEffect(() => {
+    if (!isOpen || tab !== 'profile') return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, tab, onClose]);
   /* derived data */
   const goatHealth = useMemo(
     () => (goat ? healthRecords.filter(r => r.goatId === goat.id) : []),
@@ -248,19 +364,9 @@ export const GoatModal: React.FC<Props> = ({ isOpen, onClose, goat, onEdit }) =>
               {/* PROFILE TAB */}
               {tab === 'profile' && (
                 <section className="grid gap-6 lg:grid-cols-2">
-                  {/* Photo */}
-                  <div className="rounded-xl bg-neutral-200/60 dark:bg-neutral-700/40">
-                    {goat.photos?.[0] ? (
-                      <img
-                        src={goat.photos[0]}
-                        className="h-full w-full rounded-xl object-cover"
-                      />
-                    ) : (
-                      <div className="flex h-full min-h-[12rem] flex-col items-center justify-center gap-2 py-10">
-                        <Camera className="h-10 w-10 text-neutral-400" />
-                        <p className="text-sm text-neutral-500">No photo</p>
-                      </div>
-                    )}
+                  {/* Image Slider */}
+                  <div className="rounded-xl overflow-hidden shadow-lg">
+                    <ImageSlider photos={goat.photos || []} tagNumber={goat.tagNumber} />
                   </div>
 
                   {/* Meta data */}
@@ -294,6 +400,22 @@ export const GoatModal: React.FC<Props> = ({ isOpen, onClose, goat, onEdit }) =>
                           {goat.currentWeight} kg
                         </span>
                       </p>
+                      <p>
+                        <span className="text-neutral-500">Purchase Price</span>
+                        <br />
+                        <span className="font-semibold text-neutral-900 dark:text-neutral-100">
+                          {money(goat.purchasePrice)}
+                        </span>
+                      </p>
+                      {goat.salePrice && (
+                        <p>
+                          <span className="text-neutral-500">Sale Price</span>
+                          <br />
+                          <span className="font-semibold text-emerald-600 dark:text-emerald-400">
+                            {money(goat.salePrice)}
+                          </span>
+                        </p>
+                      )}
                     </div>
 
                     {goat.color && (
